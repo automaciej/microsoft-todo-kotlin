@@ -1,0 +1,59 @@
+package pl.blizinski.microsofttodostore.internal.network
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * Wire DTOs for the Microsoft Graph `todoTaskList`/`todoTask` resources — the only place in this
+ * library that knows Graph's own JSON shape and `dateTimeTimeZone` date format.
+ * [pl.blizinski.tasksync.SyncEngine]/[pl.blizinski.tasksync.PendingOpsProcessor] never see these.
+ *
+ * All requests carry `Prefer: outlook.timezone="UTC"`, so every [GraphDateTimeTimeZone] this
+ * library reads or writes is always UTC — this is what keeps the local <-> epoch-ms conversion
+ * a single-timezone problem instead of needing IANA/Windows timezone-name translation.
+ */
+@Serializable
+internal data class GraphTaskListsResponse(
+    val value: List<GraphTaskList> = emptyList(),
+    @SerialName("@odata.nextLink") val nextLink: String? = null,
+)
+
+@Serializable
+internal data class GraphTaskList(
+    val id: String? = null,
+    val displayName: String = "",
+)
+
+@Serializable
+internal data class GraphTasksResponse(
+    val value: List<GraphTask> = emptyList(),
+    @SerialName("@odata.nextLink") val nextLink: String? = null,
+)
+
+@Serializable
+internal data class GraphTask(
+    val id: String? = null,
+    val title: String = "",
+    val body: GraphItemBody? = null,
+    /** "notStarted" | "inProgress" | "completed" | "waitingOnOthers" | "deferred". */
+    val status: String = "notStarted",
+    /** "low" | "normal" | "high". */
+    val importance: String = "normal",
+    val categories: List<String> = emptyList(),
+    val dueDateTime: GraphDateTimeTimeZone? = null,
+    val completedDateTime: GraphDateTimeTimeZone? = null,
+    val createdDateTime: String? = null,
+    val lastModifiedDateTime: String? = null,
+)
+
+@Serializable
+internal data class GraphItemBody(
+    val content: String? = null,
+    val contentType: String = "text",
+)
+
+@Serializable
+internal data class GraphDateTimeTimeZone(
+    val dateTime: String,
+    val timeZone: String = "UTC",
+)
