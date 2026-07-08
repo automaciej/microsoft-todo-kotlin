@@ -27,7 +27,9 @@ kotlin {
             implementation(libs.room.ktx)
             implementation(libs.work.runtime.ktx)
             implementation(libs.okhttp)
-            implementation("pl.blizinski:task-sync-kotlin:0.1.0-SNAPSHOT")
+            // Resolved via JitPack normally; substituted for the local checkout when one exists
+            // as a sibling directory — see settings.gradle.kts.
+            implementation("com.github.automaciej:task-sync-kotlin:v0.1.1")
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
