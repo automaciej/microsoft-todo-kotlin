@@ -81,12 +81,15 @@ class MicrosoftToDoStore(
 
     private val syncConfig = SyncConfig(config.minPollInterval, config.maxPollInterval)
     private val workManager = WorkManager.getInstance(appContext)
-    private val poller = AdaptivePoller(workManager, syncConfig)
+    // config.dbName is unique per connected account (AppViewModelFactory suffixes it with the
+    // accountId), so it doubles as the poller's instance key — keeps this account's background
+    // sync chain independent of any other concurrently-connected account's (Microsoft or Google).
+    private val poller = AdaptivePoller(workManager, syncConfig, instanceKey = config.dbName)
 
     private val _syncStatus = MutableStateFlow(SyncStatus())
 
     init {
-        SyncWorkerDependencies.current = SyncWorkerDependencies.Deps(syncEngine, syncConfig)
+        SyncWorkerDependencies.put(config.dbName, SyncWorkerDependencies.Deps(syncEngine, syncConfig))
         poller.start()
     }
 
@@ -279,6 +282,6 @@ class MicrosoftToDoStore(
     override fun close() {
         poller.cancel()
         db.close()
-        SyncWorkerDependencies.current = null
+        SyncWorkerDependencies.remove(config.dbName)
     }
 }
