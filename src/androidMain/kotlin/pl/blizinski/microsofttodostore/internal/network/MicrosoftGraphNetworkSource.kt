@@ -151,7 +151,7 @@ internal class GraphApiException(val httpStatus: Int, message: String) : Excepti
 // All requests carry `Prefer: outlook.timezone="UTC"`, so every dateTime string here is UTC.
 // ---------------------------------------------------------------------------
 
-private fun GraphTask.toRemoteRecord(): RemoteRecord<MicrosoftTask> {
+internal fun GraphTask.toRemoteRecord(): RemoteRecord<MicrosoftTask> {
     val due = dueDateTime?.dateTime?.parseGraphDateTimeToEpochMs()
     return RemoteRecord(
         remoteId = requireNotNull(id),
@@ -171,7 +171,7 @@ private fun GraphTask.toRemoteRecord(): RemoteRecord<MicrosoftTask> {
     )
 }
 
-private fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
+internal fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
     title = title,
     body = GraphItemBody(content = notes ?: "", contentType = "text"),
     importance = priority.toImportanceString(),
@@ -179,19 +179,19 @@ private fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
     dueDateTime = dueDate?.let { GraphDateTimeTimeZone(dateTime = it.toGraphDateTime(), timeZone = "UTC") },
 )
 
-private fun String.toPriorityInt(): Int? = when (this) {
+internal fun String.toPriorityInt(): Int? = when (this) {
     "low" -> 0
     "high" -> 2
     else -> 1
 }
 
-private fun Int?.toImportanceString(): String = when (this) {
+internal fun Int?.toImportanceString(): String = when (this) {
     0 -> "low"
     2 -> "high"
     else -> "normal"
 }
 
-private fun Long.isUtcMidnight(): Boolean {
+internal fun Long.isUtcMidnight(): Boolean {
     val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
     cal.timeInMillis = this
     return cal.get(java.util.Calendar.HOUR_OF_DAY) == 0 &&
@@ -200,13 +200,13 @@ private fun Long.isUtcMidnight(): Boolean {
 }
 
 /** Graph's `dateTimeTimeZone.dateTime`: no trailing 'Z', variable fractional-second digits. */
-private fun Long.toGraphDateTime(): String {
+internal fun Long.toGraphDateTime(): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")
     return sdf.format(java.util.Date(this))
 }
 
-private fun String.parseGraphDateTimeToEpochMs(): Long? = try {
+internal fun String.parseGraphDateTimeToEpochMs(): Long? = try {
     val truncated = if (length > 23) substring(0, 23) else this
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")
@@ -214,14 +214,14 @@ private fun String.parseGraphDateTimeToEpochMs(): Long? = try {
 } catch (e: Exception) { null }
 
 /** `createdDateTime`/`lastModifiedDateTime`: plain ISO-8601 UTC, trailing 'Z'. */
-private fun String.parseIso8601ToEpochMs(): Long? = try {
+internal fun String.parseIso8601ToEpochMs(): Long? = try {
     val truncated = (if (length > 24) substring(0, 23) + "Z" else this)
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")
     sdf.parse(truncated)?.time
 } catch (e: Exception) { null }
 
-private fun Long.toIso8601Utc(): String {
+internal fun Long.toIso8601Utc(): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")
     return sdf.format(java.util.Date(this))
