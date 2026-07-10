@@ -1,5 +1,6 @@
 package pl.blizinski.microsofttodostore.internal.network
 
+import kotlinx.serialization.json.Json
 import pl.blizinski.microsofttodostore.internal.MicrosoftTask
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -8,6 +9,30 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MicrosoftGraphNetworkSourceTest {
+
+    // Same Json config as MicrosoftGraphNetworkSource's own (private) instance.
+    private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * Regression test for a user-reported crash: creating/updating a task with a due date
+     * failed with a Graph API 400 whose body read "Cannot write null for property 'TimeZone'.
+     * For 'DueDateTime'." — GraphDateTimeTimeZone.timeZone is always passed as "UTC" in
+     * toGraphTask() below, which happens to equal that property's own declared default, so
+     * kotlinx.serialization's encodeDefaults = false (this Json instance's default) silently
+     * dropped it from the outgoing JSON entirely; Graph's server rejects a dateTimeTimeZone
+     * object with no timeZone key. Fixed with @EncodeDefault on that property
+     * (GraphApiModels.kt) — this test pins the actual encoded JSON string, not just the data
+     * class's in-memory field value, since the field itself was never wrong.
+     */
+    @Test
+    fun encodingATaskWithADueDateAlwaysIncludesTimeZone() {
+        val graphTask = MicrosoftTask(title = "Buy milk", dueDate = 1772891130000L).toGraphTask()
+        val encoded = json.encodeToString(GraphTask.serializer(), graphTask)
+        assertTrue(
+            encoded.contains(""""timeZone":"UTC""""),
+            "encoded dueDateTime must include an explicit timeZone, got: $encoded",
+        )
+    }
 
     // -----------------------------------------------------------------------
     // Graph dateTimeTimeZone.dateTime: no trailing 'Z', variable fractional-second digits.

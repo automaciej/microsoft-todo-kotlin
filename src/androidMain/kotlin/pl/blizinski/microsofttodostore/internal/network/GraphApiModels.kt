@@ -1,5 +1,7 @@
 package pl.blizinski.microsofttodostore.internal.network
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -52,8 +54,19 @@ internal data class GraphItemBody(
     val contentType: String = "text",
 )
 
+/**
+ * [timeZone] is `@EncodeDefault`-forced because callers always pass "UTC" explicitly (see this
+ * file's top doc comment) — a value that happens to equal the property's own declared default,
+ * which kotlinx.serialization's `Json.encodeDefaults = false` (the default, and what this
+ * library's `Json` instance uses) would otherwise silently drop from the outgoing request body.
+ * Graph's own server-side deserializer requires `timeZone` present on a `dateTimeTimeZone`
+ * object and rejects one missing it with a 400 whose body reads "Cannot write null for property
+ * 'TimeZone'. For 'DueDateTime'." — confirmed by reproducing the encoding with a throwaway test
+ * against this exact class before this fix (a user-reported crash, not found by inspection).
+ */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 internal data class GraphDateTimeTimeZone(
     val dateTime: String,
-    val timeZone: String = "UTC",
+    @EncodeDefault val timeZone: String = "UTC",
 )
