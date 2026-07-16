@@ -35,6 +35,7 @@ import pl.blizinski.tasksync.SyncedListRecord
 import pl.blizinski.tasksync.SyncedRecord
 import pl.blizinski.tasksync.accumulateRecentErrors
 import pl.blizinski.tasksync.db.TaskSyncDatabase
+import pl.blizinski.tasksync.isNetworkAvailable
 import java.io.Closeable
 import java.util.UUID
 import kotlinx.serialization.json.Json
@@ -79,7 +80,10 @@ class MicrosoftToDoStore(
     private val network = MicrosoftGraphNetworkSource(tokenProvider)
     private val errorClassifier = MicrosoftSyncErrorClassifier()
     private val pendingOpsProcessor = PendingOpsProcessor(store, network, serializer<MicrosoftTask>(), errorClassifier)
-    private val syncEngine = SyncEngine(store, network, pendingOpsProcessor, errorClassifier)
+    private val syncEngine = SyncEngine(
+        store, network, pendingOpsProcessor, errorClassifier,
+        isOnline = { isNetworkAvailable(appContext) },
+    )
 
     private val syncConfig = SyncConfig(config.minPollInterval, config.maxPollInterval)
     private val workManager = WorkManager.getInstance(appContext)
