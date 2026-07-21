@@ -1,6 +1,7 @@
 package pl.blizinski.microsofttodostore.internal.network
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import pl.blizinski.microsofttodostore.internal.MicrosoftTask
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -204,5 +205,40 @@ class MicrosoftGraphNetworkSourceTest {
     fun toGraphTaskOmitsDueDateTimeWhenNull() {
         val graphTask = MicrosoftTask(title = "No due date").toGraphTask()
         assertNull(graphTask.dueDateTime)
+    }
+
+    /**
+     * Regression test for a user-reported bug: tapping "Unschedule" on a Microsoft To Do task
+     * cleared the due date locally, but it silently reappeared after the next background sync.
+     * Cause: [toGraphTask] correctly maps a cleared due date to `dueDateTime = null` (see
+     * [toGraphTaskOmitsDueDateTimeWhenNull] above), but the update PATCH body was built by
+     * encoding that DTO directly — and since `null` is [GraphTask.dueDateTime]'s own declared
+     * default, `encodeDefaults = false` (this Json instance's default) dropped the key from the
+     * outgoing JSON entirely. Graph's PATCH semantics treat an *omitted* field as "leave
+     * unchanged", not "clear" — only an explicit `"dueDateTime": null` clears it — so the
+     * PATCH silently no-opped and the next sync pull re-applied the still-populated server value
+     * over the local clear. Fixed by [MicrosoftTask.toUpdateRequestJson] explicitly injecting a
+     * `null` dueDateTime into the encoded body when the update is clearing it, rather than
+     * relying on [GraphTask]'s own (unrelated) default-encoding behavior.
+     */
+    @Test
+    fun updateRequestBodyExplicitlyClearsDueDateTime() {
+        val task = MicrosoftTask(title = "Buy milk", dueDate = null)
+        val encoded = json.encodeToString(JsonObject.serializer(), task.toUpdateRequestJson())
+        assertTrue(
+            encoded.contains(""""dueDateTime":null"""),
+            "clearing a due date must send an explicit null, got: $encoded",
+        )
+    }
+
+    @Test
+    fun updateRequestBodyKeepsDueDateTimeWhenSet() {
+        val due = 1772891130000L
+        val task = MicrosoftTask(title = "Buy milk", dueDate = due)
+        val encoded = json.encodeToString(JsonObject.serializer(), task.toUpdateRequestJson())
+        assertTrue(
+            encoded.contains(""""dateTime":"${due.toGraphDateTime()}""""),
+            "a set due date must still be encoded, got: $encoded",
+        )
     }
 }

@@ -3,6 +3,10 @@ package pl.blizinski.microsofttodostore.internal.network
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -123,7 +127,7 @@ internal class MicrosoftGraphNetworkSource(
     }
 
     override suspend fun updateRecord(remoteListId: String, remoteId: String, content: MicrosoftTask) {
-        val body = json.encodeToString(GraphTask.serializer(), content.toGraphTask())
+        val body = json.encodeToString(JsonObject.serializer(), content.toUpdateRequestJson())
         request("PATCH", "$GRAPH_BASE/me/todo/lists/$remoteListId/tasks/$remoteId", body)
     }
 
@@ -178,6 +182,25 @@ internal fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
     categories = labels,
     dueDateTime = dueDate?.let { GraphDateTimeTimeZone(dateTime = it.toGraphDateTime(), timeZone = "UTC") },
 )
+
+/**
+ * [updateRecord]'s PATCH body. Graph's PATCH treats an *omitted* field as "leave unchanged" and
+ * only clears a field given an *explicit* `null` — but [toGraphTask]'s `dueDateTime` is `null`
+ * whenever there's no due date, which is that property's own declared default, so
+ * kotlinx.serialization's `encodeDefaults = false` (the `json` instance's default) silently drops
+ * it from the encoded body instead of sending `null`. That made clearing a task's due date from
+ * this app a no-op on Graph's side: the PATCH returned 200, but the server-side due date was
+ * untouched, and the next sync pull re-applied it locally, undoing the user's clear. This
+ * reinstates the explicit `null` only for the update path, rather than forcing it onto
+ * [GraphTask] itself, which would also leak into [MicrosoftGraphNetworkSource.completeRecord]/
+ * [MicrosoftGraphNetworkSource.uncompleteRecord]'s status-only PATCHes (built from a bare
+ * `GraphTask(status = ...)`, sharing the same class) and wipe due dates as a side effect of
+ * completing a task.
+ */
+internal fun MicrosoftTask.toUpdateRequestJson(): JsonObject {
+    val encoded = Json.encodeToJsonElement(GraphTask.serializer(), toGraphTask()).jsonObject
+    return if (dueDate == null) JsonObject(encoded + ("dueDateTime" to JsonNull)) else encoded
+}
 
 internal fun String.toPriorityInt(): Int? = when (this) {
     "low" -> 0
