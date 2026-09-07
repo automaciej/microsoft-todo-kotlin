@@ -171,6 +171,7 @@ internal fun GraphTask.toRemoteRecord(): RemoteRecord<MicrosoftTask> {
             completedDate = completedDateTime?.dateTime?.parseGraphDateTimeToEpochMs(),
             priority = importance.toPriorityInt(),
             labels = categories,
+            recurrenceRule = recurrence?.toRecurrenceRule(),
         ),
     )
 }

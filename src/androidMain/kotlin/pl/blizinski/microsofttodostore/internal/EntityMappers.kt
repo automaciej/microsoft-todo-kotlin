@@ -18,6 +18,7 @@ internal fun SyncedRecord<MicrosoftTask>.toTask(): Task = Task(
     completedDate = content.completedDate,
     priority = content.priority,
     labels = content.labels,
+    recurrenceRule = content.recurrenceRule,
 )
 
 internal fun SyncedListRecord<MicrosoftTaskList>.toTaskList(): TaskList = TaskList(

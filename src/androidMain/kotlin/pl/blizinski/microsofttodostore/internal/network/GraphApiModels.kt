@@ -46,6 +46,46 @@ internal data class GraphTask(
     val completedDateTime: GraphDateTimeTimeZone? = null,
     val createdDateTime: String? = null,
     val lastModifiedDateTime: String? = null,
+    /** Null when the task doesn't recur. Read-only for now: this field is mapped on read
+     *  (`toRemoteRecord`) but deliberately not yet written on update — see
+     *  `Docs/designs/2026-09-07-recurring-tasks.md` in the composeApp repo (Recurring Tasks
+     *  design) for why: whether Graph's PATCH treats an explicit `"recurrence": null` as
+     *  "clear the rule" (matching [GraphDateTimeTimeZone]'s own documented omitted-vs-null
+     *  PATCH footgun above) needs live-API verification before the write path is wired. */
+    val recurrence: GraphPatternedRecurrence? = null,
+)
+
+/** Microsoft Graph's `patternedRecurrence` — a `pattern` + `range` pair. */
+@Serializable
+internal data class GraphPatternedRecurrence(
+    val pattern: GraphRecurrencePattern,
+    val range: GraphRecurrenceRange,
+)
+
+/** Graph's `recurrencePattern`. [type] is one of "daily"/"weekly"/"absoluteMonthly"/
+ *  "relativeMonthly"/"absoluteYearly"/"relativeYearly"; [index] is one of "first"/"second"/
+ *  "third"/"fourth"/"last", meaningful only for the two "relative*" pattern types. */
+@Serializable
+internal data class GraphRecurrencePattern(
+    val type: String,
+    val interval: Int,
+    val month: Int = 0,
+    val dayOfMonth: Int = 0,
+    val daysOfWeek: List<String> = emptyList(),
+    val firstDayOfWeek: String = "sunday",
+    val index: String = "first",
+)
+
+/** Graph's `recurrenceRange`. [type] is one of "endDate"/"noEnd"/"numbered". [startDate] is
+ *  always required by Graph's API, `yyyy-MM-dd` — this library defaults it to the task's own
+ *  due date when writing (once the write path is wired; see [GraphTask.recurrence]'s doc
+ *  comment). */
+@Serializable
+internal data class GraphRecurrenceRange(
+    val type: String,
+    val startDate: String,
+    val endDate: String? = null,
+    val numberOfOccurrences: Int = 0,
 )
 
 @Serializable
