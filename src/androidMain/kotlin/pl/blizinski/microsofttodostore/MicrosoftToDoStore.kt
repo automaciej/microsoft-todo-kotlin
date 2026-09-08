@@ -20,6 +20,7 @@ import pl.blizinski.microsofttodostore.internal.toPublic
 import pl.blizinski.microsofttodostore.internal.toTask
 import pl.blizinski.microsofttodostore.internal.toTaskList
 import pl.blizinski.microsofttodostore.models.FatalStorageError
+import pl.blizinski.microsofttodostore.models.RecurrenceRule
 import pl.blizinski.microsofttodostore.models.SyncStatus
 import pl.blizinski.microsofttodostore.models.Task
 import pl.blizinski.microsofttodostore.models.TaskList
@@ -248,10 +249,10 @@ class MicrosoftToDoStore(
         localId
     }
 
-    override suspend fun updateTask(localId: String, title: String, notes: String?, dueDate: Long?): Unit = guardWrite(onError = Unit) {
+    override suspend fun updateTask(localId: String, title: String, notes: String?, dueDate: Long?, recurrenceRule: RecurrenceRule?): Unit = guardWrite(onError = Unit) {
         val entity = store.getRecordByLocalId(localId) ?: return@guardWrite
         val now = System.currentTimeMillis()
-        val newContent = entity.content.copy(title = title, notes = notes, dueDate = dueDate)
+        val newContent = entity.content.copy(title = title, notes = notes, dueDate = dueDate, recurrenceRule = recurrenceRule)
         store.upsertRecord(entity.copy(content = newContent))
         store.enqueuePendingOp(
             PendingOp(

@@ -1,6 +1,7 @@
 package pl.blizinski.microsofttodostore
 
 import kotlinx.coroutines.flow.Flow
+import pl.blizinski.microsofttodostore.models.RecurrenceRule
 import pl.blizinski.microsofttodostore.models.SyncStatus
 import pl.blizinski.microsofttodostore.models.Task
 import pl.blizinski.microsofttodostore.models.TaskList
@@ -37,8 +38,15 @@ interface MicrosoftToDoStoreApi {
     /** Creates a task and returns its stable [Task.id] localId. */
     suspend fun createTask(listLocalId: String, title: String, notes: String? = null, dueDate: Long? = null): String
 
-    /** Updates title, notes, and due date. Pass null to clear that field. */
-    suspend fun updateTask(localId: String, title: String, notes: String?, dueDate: Long? = null)
+    /**
+     * Updates title, notes, due date, and recurrence rule. Pass null to clear that field.
+     * [recurrenceRule] is only ever meaningful alongside a non-null [dueDate] — Graph itself
+     * rejects setting a recurrence rule on a task with no due date (confirmed against a live
+     * account; see `Docs/2026-09-07-recurrence-write-path-verification.md` in the composeApp
+     * repo), so passing a non-null [recurrenceRule] with a null [dueDate] here silently drops
+     * the recurrence rather than sending a request Graph would reject.
+     */
+    suspend fun updateTask(localId: String, title: String, notes: String?, dueDate: Long? = null, recurrenceRule: RecurrenceRule? = null)
 
     suspend fun completeTask(localId: String)
 

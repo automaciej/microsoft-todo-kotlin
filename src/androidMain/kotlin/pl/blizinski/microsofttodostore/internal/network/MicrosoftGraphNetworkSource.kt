@@ -176,12 +176,21 @@ internal fun GraphTask.toRemoteRecord(): RemoteRecord<MicrosoftTask> {
     )
 }
 
+/**
+ * [recurrence] is only ever populated when [dueDate] is also set — verified against a live
+ * account (see `Docs/2026-09-07-recurrence-write-path-verification.md` in the composeApp repo):
+ * Graph rejects a `recurrence` PATCH with no `dueDateTime` present in the *same* request. This
+ * app already requires a due date before recurrence can be set (recurrence needs an anchor), so
+ * [dueDate] being null here alongside a non-null [recurrenceRule] would be a caller bug — this
+ * silently drops [recurrenceRule] in that case rather than sending a request Graph would 400 on.
+ */
 internal fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
     title = title,
     body = GraphItemBody(content = notes ?: "", contentType = "text"),
     importance = priority.toImportanceString(),
     categories = labels,
     dueDateTime = dueDate?.let { GraphDateTimeTimeZone(dateTime = it.toGraphDateTime(), timeZone = "UTC") },
+    recurrence = dueDate?.let { due -> recurrenceRule?.toGraphPatternedRecurrence(due.toGraphDateOnly()) },
 )
 
 /**
@@ -197,10 +206,19 @@ internal fun MicrosoftTask.toGraphTask(): GraphTask = GraphTask(
  * [MicrosoftGraphNetworkSource.uncompleteRecord]'s status-only PATCHes (built from a bare
  * `GraphTask(status = ...)`, sharing the same class) and wipe due dates as a side effect of
  * completing a task.
+ *
+ * [recurrenceRule] gets the identical treatment, for the identical reason, confirmed against a
+ * live account: `PATCH {"recurrence": null}` genuinely clears a task's recurrence (independently
+ * verified via a follow-up `GET`), but [GraphTask.recurrence]'s own declared default is `null`,
+ * so `encodeDefaults = false` would silently omit it from the encoded body whenever
+ * [recurrenceRule] is null — exactly the same silent-no-op failure mode [dueDate] already had.
  */
 internal fun MicrosoftTask.toUpdateRequestJson(): JsonObject {
     val encoded = Json.encodeToJsonElement(GraphTask.serializer(), toGraphTask()).jsonObject
-    return if (dueDate == null) JsonObject(encoded + ("dueDateTime" to JsonNull)) else encoded
+    var result = encoded
+    if (dueDate == null) result = JsonObject(result + ("dueDateTime" to JsonNull))
+    if (recurrenceRule == null) result = JsonObject(result + ("recurrence" to JsonNull))
+    return result
 }
 
 internal fun String.toPriorityInt(): Int? = when (this) {

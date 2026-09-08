@@ -18,7 +18,9 @@ data class Task(
     val priority: Int? = null,
     /** Microsoft's free-form "categories" field. */
     val labels: List<String> = emptyList(),
-    /** This task's recurrence rule, read from Graph's `recurrence` field. Null if the task
-     *  doesn't recur. Read-only for now — see [pl.blizinski.microsofttodostore.MicrosoftToDoStoreApi.updateTask]. */
+    /** This task's recurrence rule, read from (and, via
+     *  [pl.blizinski.microsofttodostore.MicrosoftToDoStoreApi.updateTask], written to) Graph's
+     *  `recurrence` field. Null if the task doesn't recur. Only meaningful alongside a non-null
+     *  [dueDate] — see that method's own doc comment. */
     val recurrenceRule: RecurrenceRule? = null,
 )

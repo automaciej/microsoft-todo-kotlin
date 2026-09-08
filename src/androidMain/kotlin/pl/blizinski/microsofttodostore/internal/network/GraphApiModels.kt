@@ -46,12 +46,17 @@ internal data class GraphTask(
     val completedDateTime: GraphDateTimeTimeZone? = null,
     val createdDateTime: String? = null,
     val lastModifiedDateTime: String? = null,
-    /** Null when the task doesn't recur. Read-only for now: this field is mapped on read
-     *  (`toRemoteRecord`) but deliberately not yet written on update — see
-     *  `Docs/designs/2026-09-07-recurring-tasks.md` in the composeApp repo (Recurring Tasks
-     *  design) for why: whether Graph's PATCH treats an explicit `"recurrence": null` as
-     *  "clear the rule" (matching [GraphDateTimeTimeZone]'s own documented omitted-vs-null
-     *  PATCH footgun above) needs live-API verification before the write path is wired. */
+    /**
+     * Null when the task doesn't recur. Read and written (see `toGraphTask`/
+     * `toUpdateRequestJson`) — both directions verified against a live account (see
+     * `Docs/2026-09-07-recurrence-write-path-verification.md` in the composeApp repo):
+     * - Setting a non-null recurrence requires `dueDateTime` present in the *same* PATCH — Graph
+     *   400s with `"The property 'dueDateTime' is required when updating/creating Recurrence in
+     *   the task entity"` otherwise.
+     * - An explicit `"recurrence": null` genuinely clears it (confirmed via an independent
+     *   follow-up `GET`), the same omitted-vs-null PATCH semantics as [GraphDateTimeTimeZone]
+     *   above — `toUpdateRequestJson` applies the identical explicit-null-injection fix.
+     */
     val recurrence: GraphPatternedRecurrence? = null,
 )
 

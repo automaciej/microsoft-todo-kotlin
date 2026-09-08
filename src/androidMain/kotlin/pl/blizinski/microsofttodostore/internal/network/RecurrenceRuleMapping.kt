@@ -11,11 +11,10 @@ import java.util.TimeZone
 
 /**
  * Pure `GraphPatternedRecurrence` <-> [RecurrenceRule] mapping — no network/store dependency, so
- * it's unit-testable in isolation (see `RecurrenceRuleMappingTest.kt`). Only the read direction
- * ([GraphPatternedRecurrence.toRecurrenceRule]) is wired into [MicrosoftGraphNetworkSource]
- * today; see [pl.blizinski.microsofttodostore.internal.network.GraphTask.recurrence]'s doc
- * comment for why the write direction ([RecurrenceRule.toGraphPatternedRecurrence]) exists here
- * but isn't called yet.
+ * it's unit-testable in isolation (see `RecurrenceRuleMappingTest.kt`). Both directions are
+ * wired into [MicrosoftGraphNetworkSource] (`toRemoteRecord` reads, `toGraphTask` writes) — see
+ * [pl.blizinski.microsofttodostore.internal.network.GraphTask.recurrence]'s doc comment for the
+ * live-API verification behind both.
  */
 
 /** Returns null for a pattern/range shape this mapping doesn't recognize (an unknown

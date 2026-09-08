@@ -241,4 +241,77 @@ class MicrosoftGraphNetworkSourceTest {
             "a set due date must still be encoded, got: $encoded",
         )
     }
+
+    // -----------------------------------------------------------------------
+    // Recurrence write path — verified against a live account, see
+    // Docs/2026-09-07-recurrence-write-path-verification.md in the composeApp repo.
+    // -----------------------------------------------------------------------
+
+    @Test
+    fun toGraphTaskMapsRecurrenceRuleAnchoredToDueDate() {
+        val due = 1772841600000L // 2026-03-05, UTC midnight
+        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
+            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.DAILY,
+            interval = 2,
+        )
+        val task = MicrosoftTask(title = "Buy milk", dueDate = due, recurrenceRule = rule)
+
+        val graphTask = task.toGraphTask()
+
+        assertEquals("daily", graphTask.recurrence?.pattern?.type)
+        assertEquals(2, graphTask.recurrence?.pattern?.interval)
+        assertEquals(due.toGraphDateOnly(), graphTask.recurrence?.range?.startDate)
+    }
+
+    /** [toGraphTask]'s own doc comment: a non-null [MicrosoftTask.recurrenceRule] with a null
+     *  [MicrosoftTask.dueDate] would make Graph 400 (recurrence needs a dueDateTime in the same
+     *  request) — dropping it here is a defensive no-op, not a real usage this app produces. */
+    @Test
+    fun toGraphTaskOmitsRecurrenceWhenDueDateIsNull() {
+        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
+            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.DAILY,
+            interval = 1,
+        )
+        val graphTask = MicrosoftTask(title = "No due date", dueDate = null, recurrenceRule = rule).toGraphTask()
+        assertNull(graphTask.recurrence)
+    }
+
+    @Test
+    fun toGraphTaskOmitsRecurrenceWhenNull() {
+        val graphTask = MicrosoftTask(title = "No recurrence", dueDate = 1772841600000L).toGraphTask()
+        assertNull(graphTask.recurrence)
+    }
+
+    /**
+     * Regression-shaped test for the same silent-drop failure mode [dueDate]'s clear already
+     * had, verified live before being fixed this time rather than found via a bug report:
+     * `GraphTask.recurrence`'s own declared default is null, so `encodeDefaults = false` would
+     * silently omit it from the encoded PATCH body whenever [MicrosoftTask.recurrenceRule] is
+     * null — Graph's PATCH semantics treat that as "leave unchanged", not "clear". Confirmed
+     * against a live account that an explicit `"recurrence": null` does clear it (see the
+     * verification doc); [MicrosoftTask.toUpdateRequestJson] injects that explicit null itself.
+     */
+    @Test
+    fun updateRequestBodyExplicitlyClearsRecurrence() {
+        val task = MicrosoftTask(title = "Buy milk", dueDate = 1772841600000L, recurrenceRule = null)
+        val encoded = json.encodeToString(JsonObject.serializer(), task.toUpdateRequestJson())
+        assertTrue(
+            encoded.contains(""""recurrence":null"""),
+            "clearing a recurrence rule must send an explicit null, got: $encoded",
+        )
+    }
+
+    @Test
+    fun updateRequestBodyKeepsRecurrenceWhenSet() {
+        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
+            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.WEEKLY,
+            interval = 1,
+        )
+        val task = MicrosoftTask(title = "Buy milk", dueDate = 1772841600000L, recurrenceRule = rule)
+        val encoded = json.encodeToString(JsonObject.serializer(), task.toUpdateRequestJson())
+        assertTrue(
+            encoded.contains(""""type":"weekly""""),
+            "a set recurrence rule must still be encoded, got: $encoded",
+        )
+    }
 }
