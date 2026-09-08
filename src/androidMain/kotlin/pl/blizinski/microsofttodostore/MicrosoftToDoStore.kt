@@ -232,10 +232,10 @@ class MicrosoftToDoStore(
         }
     }
 
-    override suspend fun createTask(listLocalId: String, title: String, notes: String?, dueDate: Long?): String = guardWrite(onError = "") {
+    override suspend fun createTask(listLocalId: String, title: String, notes: String?, dueDate: Long?, recurrenceRule: RecurrenceRule?): String = guardWrite(onError = "") {
         val localId = UUID.randomUUID().toString()
         val now = System.currentTimeMillis()
-        val content = MicrosoftTask(title = title, notes = notes, createdDate = now, dueDate = dueDate)
+        val content = MicrosoftTask(title = title, notes = notes, createdDate = now, dueDate = dueDate, recurrenceRule = recurrenceRule)
         store.upsertRecord(
             SyncedRecord(localId = localId, remoteId = null, listLocalId = listLocalId, content = content, isCompleted = false, lastSyncedAt = null)
         )

@@ -35,8 +35,16 @@ interface MicrosoftToDoStoreApi {
      */
     suspend fun deleteList(localId: String)
 
-    /** Creates a task and returns its stable [Task.id] localId. */
-    suspend fun createTask(listLocalId: String, title: String, notes: String? = null, dueDate: Long? = null): String
+    /**
+     * Creates a task and returns its stable [Task.id] localId. [recurrenceRule] is sent in the
+     * same create request as [dueDate] — Graph's network layer (`toGraphTask`) is shared between
+     * create and update, and was live-verified to require `dueDateTime` present alongside
+     * `recurrence` in one request (see [updateTask]'s own doc comment) — a due date supplied at
+     * creation satisfies that anchor immediately, so there's no need for a separate follow-up
+     * write the way an earlier version of this app's caller worked around before this parameter
+     * existed.
+     */
+    suspend fun createTask(listLocalId: String, title: String, notes: String? = null, dueDate: Long? = null, recurrenceRule: RecurrenceRule? = null): String
 
     /**
      * Updates title, notes, due date, and recurrence rule. Pass null to clear that field.
