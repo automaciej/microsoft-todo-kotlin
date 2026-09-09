@@ -115,3 +115,7 @@ internal data class GraphDateTimeTimeZone(
     val dateTime: String,
     @EncodeDefault val timeZone: String = "UTC",
 )
+
+/** Thrown for any non-2xx Microsoft Graph API response; [httpStatus] drives
+ *  [pl.blizinski.tasksync.SyncErrorClassifier]. */
+internal class GraphApiException(val httpStatus: Int, message: String) : Exception(message)

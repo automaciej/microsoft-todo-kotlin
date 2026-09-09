@@ -146,8 +146,6 @@ internal class MicrosoftGraphNetworkSource(
     }
 }
 
-/** Thrown for any non-2xx Graph API response; [httpStatus] drives [pl.blizinski.tasksync.SyncErrorClassifier]. */
-internal class GraphApiException(val httpStatus: Int, message: String) : Exception(message)
 
 // ---------------------------------------------------------------------------
 // Mapping + date helpers. This is the only place in the library that touches Graph's
