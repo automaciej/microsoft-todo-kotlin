@@ -9,7 +9,7 @@ import pl.blizinski.tasksync.model.StoreCapabilities
 
 /**
  * Static facts about the Microsoft To Do source, available before any account is connected.
- * [MicrosoftToDo.store] builds a [pl.blizinski.tasksync.store.TaskStore] for a connected account.
+ * [microsoftToDoStore] builds a [pl.blizinski.tasksync.store.TaskStore] for a connected account.
  */
 object MicrosoftToDo {
 

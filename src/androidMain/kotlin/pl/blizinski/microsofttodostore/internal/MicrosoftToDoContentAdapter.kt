@@ -49,13 +49,14 @@ internal object MicrosoftToDoContentAdapter : ContentAdapter<MicrosoftTask, Micr
         recurrenceRule = draft.recurrenceRule as? RecurrenceRule.StructuredRule,
     )
 
+    // priority/labels are not part of the app's task editor today, so [TaskDraft] never carries a
+    // meaningful value for them on an update — preserve whatever the task already has (this also
+    // matches the pre-refactor MicrosoftToDoStore.updateTask, which never touched them).
     override fun applyDraft(existing: MicrosoftTask, draft: TaskDraft) = existing.copy(
         title = draft.title,
         notes = draft.notes,
         dueDate = draft.dueDate,
         dueHasTime = draft.dueHasTime,
-        priority = draft.priority,
-        labels = draft.labels,
         recurrenceRule = draft.recurrenceRule as? RecurrenceRule.StructuredRule,
     )
 

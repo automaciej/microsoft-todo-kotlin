@@ -20,14 +20,14 @@ import pl.blizinski.tasksync.store.buildAndroidTaskStore
  * [tokenProvider] wraps MSAL (this library never depends on MSAL directly) — see
  * [MicrosoftAccessTokenProvider].
  */
-fun MicrosoftToDo.store(
+fun microsoftToDoStore(
     context: Context,
     tokenProvider: MicrosoftAccessTokenProvider,
     config: StoreConfig,
 ): TaskStore = buildAndroidTaskStore(
     context = context,
     config = config,
-    capabilities = capabilities,
+    capabilities = MicrosoftToDo.capabilities,
     network = MicrosoftGraphNetworkSource(tokenProvider),
     errorClassifier = microsoftGraphErrorClassifier(),
     recordSerializer = serializer<MicrosoftTask>(),
