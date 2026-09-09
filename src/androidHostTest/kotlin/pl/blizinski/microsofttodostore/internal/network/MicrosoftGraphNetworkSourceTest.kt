@@ -250,8 +250,8 @@ class MicrosoftGraphNetworkSourceTest {
     @Test
     fun toGraphTaskMapsRecurrenceRuleAnchoredToDueDate() {
         val due = 1772841600000L // 2026-03-05, UTC midnight
-        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
-            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.DAILY,
+        val rule = pl.blizinski.tasksync.model.RecurrenceRule.StructuredRule(
+            frequency = pl.blizinski.tasksync.model.RecurrenceFrequency.DAILY,
             interval = 2,
         )
         val task = MicrosoftTask(title = "Buy milk", dueDate = due, recurrenceRule = rule)
@@ -268,8 +268,8 @@ class MicrosoftGraphNetworkSourceTest {
      *  request) — dropping it here is a defensive no-op, not a real usage this app produces. */
     @Test
     fun toGraphTaskOmitsRecurrenceWhenDueDateIsNull() {
-        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
-            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.DAILY,
+        val rule = pl.blizinski.tasksync.model.RecurrenceRule.StructuredRule(
+            frequency = pl.blizinski.tasksync.model.RecurrenceFrequency.DAILY,
             interval = 1,
         )
         val graphTask = MicrosoftTask(title = "No due date", dueDate = null, recurrenceRule = rule).toGraphTask()
@@ -303,8 +303,8 @@ class MicrosoftGraphNetworkSourceTest {
 
     @Test
     fun updateRequestBodyKeepsRecurrenceWhenSet() {
-        val rule = pl.blizinski.microsofttodostore.models.RecurrenceRule(
-            frequency = pl.blizinski.microsofttodostore.models.RecurrenceFrequency.WEEKLY,
+        val rule = pl.blizinski.tasksync.model.RecurrenceRule.StructuredRule(
+            frequency = pl.blizinski.tasksync.model.RecurrenceFrequency.WEEKLY,
             interval = 1,
         )
         val task = MicrosoftTask(title = "Buy milk", dueDate = 1772841600000L, recurrenceRule = rule)

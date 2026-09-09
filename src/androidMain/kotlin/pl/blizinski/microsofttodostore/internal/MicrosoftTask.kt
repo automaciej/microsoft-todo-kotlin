@@ -1,7 +1,7 @@
 package pl.blizinski.microsofttodostore.internal
 
 import kotlinx.serialization.Serializable
-import pl.blizinski.microsofttodostore.models.RecurrenceRule
+import pl.blizinski.tasksync.model.RecurrenceRule
 
 /**
  * Opaque content type for [pl.blizinski.tasksync.SyncEngine]/[pl.blizinski.tasksync.PendingOpsProcessor]
@@ -25,7 +25,7 @@ internal data class MicrosoftTask(
     /** Microsoft's "importance" field: 0 = low, 1 = normal, 2 = high. */
     val priority: Int? = null,
     val labels: List<String> = emptyList(),
-    val recurrenceRule: RecurrenceRule? = null,
+    val recurrenceRule: RecurrenceRule.StructuredRule? = null,
 )
 
 @Serializable

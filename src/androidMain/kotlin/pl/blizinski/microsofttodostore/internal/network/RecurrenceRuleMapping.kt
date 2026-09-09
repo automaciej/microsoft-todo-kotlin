@@ -1,10 +1,10 @@
 package pl.blizinski.microsofttodostore.internal.network
 
-import pl.blizinski.microsofttodostore.models.RecurrenceEnd
-import pl.blizinski.microsofttodostore.models.RecurrenceFrequency
-import pl.blizinski.microsofttodostore.models.RecurrenceRule
-import pl.blizinski.microsofttodostore.models.Weekday
-import pl.blizinski.microsofttodostore.models.WeekIndex
+import pl.blizinski.tasksync.model.RecurrenceEnd
+import pl.blizinski.tasksync.model.RecurrenceFrequency
+import pl.blizinski.tasksync.model.RecurrenceRule
+import pl.blizinski.tasksync.model.Weekday
+import pl.blizinski.tasksync.model.WeekIndex
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -21,7 +21,7 @@ import java.util.TimeZone
  *  `pattern.type`/`range.type` string) rather than fabricating a best guess — consistent with
  *  this library's "unsupported fields are left at default, never fabricated" mapping
  *  convention. */
-internal fun GraphPatternedRecurrence.toRecurrenceRule(): RecurrenceRule? {
+internal fun GraphPatternedRecurrence.toRecurrenceRule(): RecurrenceRule.StructuredRule? {
     val frequency = pattern.type.toRecurrenceFrequencyOrNull() ?: return null
     val end = range.toRecurrenceEndOrNull() ?: return null
     // Graph's `index` field always carries a value ("first" by default) even for pattern types
@@ -33,7 +33,7 @@ internal fun GraphPatternedRecurrence.toRecurrenceRule(): RecurrenceRule? {
     } else {
         null
     }
-    return RecurrenceRule(
+    return RecurrenceRule.StructuredRule(
         frequency = frequency,
         interval = pattern.interval,
         daysOfWeek = pattern.daysOfWeek.mapNotNull { it.toWeekdayOrNull() },
@@ -46,7 +46,7 @@ internal fun GraphPatternedRecurrence.toRecurrenceRule(): RecurrenceRule? {
 
 /** [startDate] is Graph's required `range.startDate` (`yyyy-MM-dd`) — this library defaults it
  *  to the task's own due date when the write path is eventually wired. */
-internal fun RecurrenceRule.toGraphPatternedRecurrence(startDate: String): GraphPatternedRecurrence =
+internal fun RecurrenceRule.StructuredRule.toGraphPatternedRecurrence(startDate: String): GraphPatternedRecurrence =
     GraphPatternedRecurrence(
         pattern = GraphRecurrencePattern(
             type = frequency.toGraphTypeString(),
