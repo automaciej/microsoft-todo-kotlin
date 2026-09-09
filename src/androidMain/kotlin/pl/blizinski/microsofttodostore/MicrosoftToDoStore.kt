@@ -5,6 +5,7 @@ import kotlinx.serialization.serializer
 import pl.blizinski.microsofttodostore.internal.MicrosoftTask
 import pl.blizinski.microsofttodostore.internal.MicrosoftTaskList
 import pl.blizinski.microsofttodostore.internal.MicrosoftToDoContentAdapter
+import pl.blizinski.microsofttodostore.internal.MicrosoftToDoContentMerger
 import pl.blizinski.microsofttodostore.internal.network.MicrosoftGraphNetworkSource
 import pl.blizinski.tasksync.model.StoreConfig
 import pl.blizinski.tasksync.store.TaskStore
@@ -33,4 +34,5 @@ fun microsoftToDoStore(
     recordSerializer = serializer<MicrosoftTask>(),
     listSerializer = serializer<MicrosoftTaskList>(),
     adapter = MicrosoftToDoContentAdapter,
+    merger = MicrosoftToDoContentMerger,
 )
