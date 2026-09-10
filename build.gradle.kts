@@ -36,7 +36,7 @@ kotlin {
             implementation(libs.serialization.json)
             // Resolved via JitPack normally; substituted for the local checkout when one exists
             // as a sibling directory — see settings.gradle.kts.
-            implementation("com.github.automaciej:task-sync-kotlin:v0.4.0")
+            implementation("com.github.automaciej:task-sync-kotlin:v0.4.1")
         }
         androidMain.dependencies {
             implementation(libs.room.runtime)
